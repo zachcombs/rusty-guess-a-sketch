@@ -6,18 +6,18 @@ use std::{
 use actix_web::{get, web};
 use rand::{seq::IteratorRandom, Rng};
 use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
+use serde_json;
 
 const FILENAME: &str = "categories.txt";
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Drawing {
     word: String,
-    countryCode: String,
+    countrycode: String,
     timestamp: String,
     recognized: bool,
     key_id: String,
-    drawing: Vec<i32>,
+    drawing: Vec<Vec<Vec<i32>>>,
 }
 
 fn find_category() -> String {
@@ -32,7 +32,7 @@ fn find_category() -> String {
         .expect("File had no lines")
 }
 
-async fn get_drawing_from_data() -> String {
+async fn get_drawing_from_data() -> Drawing {
     let ndjson_output: Vec<&str>;
 
     let result = reqwest::get(format!(
@@ -46,27 +46,27 @@ async fn get_drawing_from_data() -> String {
     .expect("There was an error fetching the data");
 
     ndjson_output = result.split("\n").collect();
+    println!("{}", &ndjson_output[0]);
 
     let mut rng = rand::thread_rng();
 
-    let data: Result<String> =
-        serde_json::from_str(&ndjson_output[rng.gen_range(0..ndjson_output.len())]);
+    let data: Drawing = serde_json::from_str(&ndjson_output[rng.gen_range(0..ndjson_output.len())])
+        .expect("Couldn't deserialize");
 
-    println!("{:?}", data);
-
-    return data.unwrap().;
+    return data;
 }
 
 #[get("/drawing")]
 pub async fn drawing() -> web::Json<Drawing> {
     println!("==========DRAWING!=========");
-    let drawing_data: String = get_drawing_from_data();
+    let drawing_data: Drawing = get_drawing_from_data().await;
+    println!("{}", drawing_data.word);
     web::Json(Drawing {
         word: drawing_data.word.clone(),
-        countryCode: drawing_data.countryCode.clone(),
+        countrycode: drawing_data.countrycode.clone(),
         timestamp: drawing_data.timestamp.clone(),
         recognized: drawing_data.recognized.clone(),
         key_id: drawing_data.key_id.clone(),
-        drawing: drawdrawing_dataing.drawing.clone(),
+        drawing: drawing_data.drawing.clone(),
     })
 }
