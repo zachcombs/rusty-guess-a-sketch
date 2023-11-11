@@ -1,4 +1,4 @@
-use rand::seq::IteratorRandom;
+use rand::{seq::IteratorRandom, Rng};
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -20,6 +20,9 @@ fn find_category() -> String {
 
 #[tokio::main]
 async fn main() {
+
+    let ndjson_output: Vec<&str>;
+
     let result = reqwest::get(format!(
         "https://storage.googleapis.com/quickdraw_dataset/full/simplified/{}.ndjson",
         find_category()
@@ -27,9 +30,14 @@ async fn main() {
     .await
     .unwrap()
     .text()
-    .await;
+    .await
+    .expect("There was an error fetching the data");
 
-    println!("{:?}", result);
+    ndjson_output = result.split("\n").collect();
 
-    println!("{}", find_category());
+    let mut rng = rand::thread_rng();
+
+    let data: &str = &ndjson_output[rng.gen_range(0..ndjson_output.len())];
+
+    println!("{:?}", data);
 }
