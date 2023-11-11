@@ -4,40 +4,36 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-const FILENAME: &str = "categories.txt";
+use actix_cors::Cors;
+use actix_web::{get, http::header, middleware::Logger, web, App, HttpServer};
+use serde::{Deserialize, Serialize};
+use std::io;
 
-fn find_category() -> String {
-    let f = File::open(FILENAME)
-        .unwrap_or_else(|e| panic!("(;_;) file not found: {}: {}", FILENAME, e));
-    let f = BufReader::new(f);
+mod drawing;
 
-    let lines = f.lines().map(|l| l.expect("Couldn't read line"));
 
-    lines
-        .choose(&mut rand::thread_rng())
-        .expect("File had no lines")
-}
 
-#[tokio::main]
-async fn main() {
+// #[tokio::main]
+#[actix_web::main]
+async fn main() -> io::Result<()> {
+    log::info!("starting HTTP server at http://localhost:8080");
 
-    let ndjson_output: Vec<&str>;
-
-    let result = reqwest::get(format!(
-        "https://storage.googleapis.com/quickdraw_dataset/full/simplified/{}.ndjson",
-        find_category()
-    ))
+    HttpServer::new(move || {
+        App::new()
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://localhost:8081")
+                    .allowed_methods(vec!["GET", "POST"])
+                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+                    .allowed_header(header::CONTENT_TYPE)
+                    .supports_credentials()
+                    .max_age(3600),
+            )
+            .wrap(Logger::default())
+            .service(drawing::drawing)
+    })
+    .bind(("127.0.0.1", 8080))?
+    .workers(2)
+    .run()
     .await
-    .unwrap()
-    .text()
-    .await
-    .expect("There was an error fetching the data");
-
-    ndjson_output = result.split("\n").collect();
-
-    let mut rng = rand::thread_rng();
-
-    let data: &str = &ndjson_output[rng.gen_range(0..ndjson_output.len())];
-
-    println!("{:?}", data);
 }
