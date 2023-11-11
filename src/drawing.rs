@@ -1,12 +1,12 @@
+use actix_web::{get, web};
+use async_recursion::async_recursion;
+use rand::{seq::IteratorRandom, Rng};
+use serde::{Deserialize, Serialize};
+use serde_json;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
 };
-
-use actix_web::{get, web};
-use rand::{seq::IteratorRandom, Rng};
-use serde::{Deserialize, Serialize};
-use serde_json;
 
 const FILENAME: &str = "categories.txt";
 
@@ -32,6 +32,7 @@ fn find_category() -> String {
         .expect("File had no lines")
 }
 
+#[async_recursion(?Send)]
 async fn get_drawing_from_data() -> Drawing {
     let ndjson_output: Vec<&str>;
 
@@ -52,6 +53,10 @@ async fn get_drawing_from_data() -> Drawing {
 
     let data: Drawing = serde_json::from_str(&ndjson_output[rng.gen_range(0..ndjson_output.len())])
         .expect("Couldn't deserialize");
+
+    if !data.recognized {
+        return get_drawing_from_data().await;
+    }
 
     return data;
 }
