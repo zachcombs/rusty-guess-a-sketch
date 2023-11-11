@@ -63,9 +63,7 @@ async fn get_drawing_from_data() -> Drawing {
 
 #[get("/drawing")]
 pub async fn drawing() -> web::Json<Drawing> {
-    println!("==========DRAWING!=========");
     let drawing_data: Drawing = get_drawing_from_data().await;
-    println!("{}", drawing_data.word);
     web::Json(Drawing {
         word: drawing_data.word.clone(),
         countrycode: drawing_data.countrycode.clone(),
