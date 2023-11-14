@@ -33,6 +33,34 @@ fn find_category() -> String {
 }
 
 #[async_recursion(?Send)]
+async fn get_drawing_from_category(category: String) -> Drawing {
+    let ndjson_output: Vec<&str>;
+    let result = reqwest::get(format!(
+        "https://storage.googleapis.com/quickdraw_dataset/full/simplified/{}.ndjson",
+        category
+    ))
+    .await
+    .unwrap()
+    .text()
+    .await
+    .expect("There was an error fetching the data");
+
+    ndjson_output = result.split("\n").collect();
+    println!("{}", &ndjson_output[0]);
+
+    let mut rng = rand::thread_rng();
+
+    let data: Drawing = serde_json::from_str(&ndjson_output[rng.gen_range(0..ndjson_output.len())])
+        .expect("Couldn't deserialize");
+
+    if !data.recognized {
+        return get_drawing_from_data().await;
+    }
+
+    return data;
+}
+
+#[async_recursion(?Send)]
 async fn get_drawing_from_data() -> Drawing {
     let ndjson_output: Vec<&str>;
 
@@ -64,6 +92,21 @@ async fn get_drawing_from_data() -> Drawing {
 #[get("/drawing")]
 pub async fn drawing() -> web::Json<Drawing> {
     let drawing_data: Drawing = get_drawing_from_data().await;
+    web::Json(Drawing {
+        word: drawing_data.word.clone(),
+        countrycode: drawing_data.countrycode.clone(),
+        timestamp: drawing_data.timestamp.clone(),
+        recognized: drawing_data.recognized.clone(),
+        key_id: drawing_data.key_id.clone(),
+        drawing: drawing_data.drawing.clone(),
+    })
+}
+
+#[get("/drawing/{category}")]
+pub async fn drawing_from_category(path: web::Path<String>) -> web::Json<Drawing> {
+    let category: String = path.into_inner();
+    let drawing_data: Drawing = get_drawing_from_category(category).await;
+
     web::Json(Drawing {
         word: drawing_data.word.clone(),
         countrycode: drawing_data.countrycode.clone(),

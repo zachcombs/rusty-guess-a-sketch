@@ -13,7 +13,10 @@ async fn main() -> std::io::Result<()> {
             .allowed_header(http::header::CONTENT_TYPE)
             .max_age(3600);
 
-        App::new().wrap(cors).service(drawing::drawing)
+        App::new()
+            .wrap(cors)
+            .service(drawing::drawing)
+            .service(drawing::drawing_from_category)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
