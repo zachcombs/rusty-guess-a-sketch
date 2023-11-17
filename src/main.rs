@@ -7,7 +7,9 @@ mod drawing;
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:5173")
+            //SWAP NEXT TWO LINES FOR LOCAL vs REMOTE
+            // .allowed_origin("http://localhost:5173")
+            .allowed_origin("https://https://guess-a-sketch-ten.vercel.app/")
             .allowed_methods(vec!["GET"])
             .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
             .allowed_header(http::header::CONTENT_TYPE)
@@ -18,7 +20,9 @@ async fn main() -> std::io::Result<()> {
             .service(drawing::drawing)
             .service(drawing::drawing_from_category)
     })
-    .bind(("127.0.0.1", 8080))?
+    //SWAP NEXT TWO LINES FOR LOCAL vs REMOTE
+    //.bind("127.0.0.1", 8080)
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }
