@@ -10,9 +10,10 @@ async fn main() -> std::io::Result<()> {
             //SWAP NEXT TWO LINES FOR LOCAL vs REMOTE
             // .allowed_origin("http://localhost:5173")
             .allowed_origin("https://guess-a-sketch-6hes.onrender.com")
+            .allowed_origin("https://guess-a-sketch.com")
             .allowed_origin("https://guess-a-sketch-git-develop-zachcombs-projects.vercel.app")
             .allowed_origin_fn(|origin, _req_head| {
-                origin.as_bytes().starts_with(b"http://guess-a-sketch")
+                origin.as_bytes().starts_with(b"https://guess-a-sketch")
                     && origin.as_bytes().ends_with(b".vercel.app")
             })
             .allowed_methods(vec!["GET"])
